@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+  usersservice:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "57860:80"
+
+  labservice:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "57870:80"
+
