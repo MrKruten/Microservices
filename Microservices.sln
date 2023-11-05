@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microservices.LabService", 
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{C36FBA82-0C69-4569-9F3A-0ECBE59FF731}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microservices.Core", "Microservices.Core\Microservices.Core.csproj", "{7C3E14C3-2E25-40BA-8BCC-B1AA4D038C9C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{C36FBA82-0C69-4569-9F3A-0ECBE59FF731}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C36FBA82-0C69-4569-9F3A-0ECBE59FF731}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C36FBA82-0C69-4569-9F3A-0ECBE59FF731}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C3E14C3-2E25-40BA-8BCC-B1AA4D038C9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C3E14C3-2E25-40BA-8BCC-B1AA4D038C9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C3E14C3-2E25-40BA-8BCC-B1AA4D038C9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C3E14C3-2E25-40BA-8BCC-B1AA4D038C9C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,3 +1,4 @@
+using Microservices.Core;
 
 namespace Microservices.UsersService
 {
@@ -10,6 +11,15 @@ namespace Microservices.UsersService
             // Add services to the container.
 
             builder.Services.AddControllers();
+            var authOptions = builder.Configuration.GetSection("Auth");
+            builder.Services.Configure<AuthOptions>(authOptions);
+
+            builder.Services.AddCors(options => options.AddDefaultPolicy(b =>
+            {
+                b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+            }));
+
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -23,8 +33,11 @@ namespace Microservices.UsersService
                 app.UseSwaggerUI();
             }
 
-            app.UseAuthorization();
 
+            app.UseRouting();
+            app.UseCors();
+            app.UseAuthorization();
+            
 
             app.MapControllers();
 
