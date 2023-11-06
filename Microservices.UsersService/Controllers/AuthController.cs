@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microservices.Core;
+using Microservices.UsersService.Context;
 using Microservices.UsersService.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
@@ -14,62 +16,78 @@ namespace Microservices.UsersService.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IOptions<AuthOptions> _authOptions;
-        private List<User> Users = new()
-        {
-        new User
-        {
-            Id = 1,
-            Email = "user1@email.com",
-            Password = "user1"
-        },
-        new User
-        {
-            Id = 2,
-            Email = "user2@email.com",
-            Password = "user2"
-        },
-        new User
-        {
-            Id = 3,
-            Email = "user3@email.com",
-            Password = "user3"
-        }
-    };
+        private readonly LabContext _db;
 
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IOptions<AuthOptions> authOptions, ILogger<AuthController> logger)
+        public AuthController(IOptions<AuthOptions> authOptions, ILogger<AuthController> logger, LabContext db)
         {
             _authOptions = authOptions;
             _logger = logger;
+            _db = db;
         }
 
         [Route("")]
         [HttpGet, ActionName("GetUsers")]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            return Ok(Users);
+            var users = await _db.Users.ToListAsync();
+            return Ok(users);
         }
 
         [Route("login")]
         [HttpPost, ActionName("Login")]
-        public IActionResult Login([FromBody] Login request)
+        public async Task<IActionResult> Login([FromBody] Login request)
         {
-            var user = Authenticate(request.Email, request.Password);
+            var user = await GetUser(request.Email, request.Password);
 
             if (user != null)
             {
                 var token = GenerateJWT(user);
-
                 return Ok(new { access_token = token });
             }
 
             return Unauthorized();
         }
 
-        private User Authenticate(string email, string password)
+        [Route("register")]
+        [HttpPost, ActionName("Register")]
+        public async Task<IActionResult> Register([FromBody] Login request)
         {
-            return Users.SingleOrDefault(u => u.Email == email && u.Password == password);
+            var user = await GetUserByEmail(request.Email);
+
+            if (user != null)
+            {
+                return BadRequest("A user with such an email already exists");
+            }
+
+            var newUser = new User()
+            {
+                Email = request.Email,
+                Password = request.Password,
+            };
+            newUser = await AddUser(newUser);
+
+            return Ok(newUser);
+        }
+
+        private async Task<User> AddUser(User user)
+        {
+            var result = await _db.Users.AddAsync(user);
+            await _db.SaveChangesAsync();
+            return result.Entity;
+        }
+
+        private async Task<User?> GetUser(string email, string password)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email && u.Password == password);
+            return user;
+        }
+
+        private async Task<User?> GetUserByEmail(string email)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+            return user;
         }
 
         private string GenerateJWT(User user)
