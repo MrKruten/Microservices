@@ -19,11 +19,14 @@ services:
       dockerfile: Microservices.UsersService/Dockerfile
     depends_on:
       - db
+      - rabbit
     restart: always
 
   labservice:
     container_name: lab_service
     image: ${DOCKER_REGISTRY-}microserviceslabservice
+    depends_on:
+     - rabbit
     networks:
       - labs
     build:
@@ -45,6 +48,23 @@ services:
     networks:
       - labs
     restart: always
+  
+  rabbit:
+    container_name: rabbit
+    image: rabbitmq:management
+    hostname: "messageBroker"
+    environment:
+      RABBITMQ_DEFAULT_USER: "admin"
+      RABBITMQ_DEFAULT_PASS: "admin"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - labs
+    restart: always
+    volumes:
+      - ./rabbitmq/data:/var/lib/rabbitmq/
+      - ./rabbitmq/log:/var/log/rabbitmq
 
   proxy:
     image: nginx:latest

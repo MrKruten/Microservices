@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microservices.Core;
 using Microservices.UsersService.Context;
 using Microservices.UsersService.Models;
+using Microservices.UsersService.Services.RabbitMQ;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -16,15 +17,17 @@ namespace Microservices.UsersService.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IOptions<AuthOptions> _authOptions;
+        private readonly IRabbitMqService _rabbitMqService;
         private readonly LabContext _db;
 
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IOptions<AuthOptions> authOptions, ILogger<AuthController> logger, LabContext db)
+        public AuthController(IOptions<AuthOptions> authOptions, ILogger<AuthController> logger, LabContext db, IRabbitMqService rabbitMqService)
         {
             _authOptions = authOptions;
             _logger = logger;
             _db = db;
+            _rabbitMqService = rabbitMqService;
         }
 
         [Route("")]
@@ -44,6 +47,7 @@ namespace Microservices.UsersService.Controllers
             if (user != null)
             {
                 var token = GenerateJWT(user);
+                _rabbitMqService.SendMessage($"user {user.Email} login");
                 return Ok(new { access_token = token });
             }
 

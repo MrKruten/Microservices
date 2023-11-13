@@ -1,9 +1,9 @@
 using Microservices.Core;
+using Microservices.LabService.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
 namespace Microservices.LabService
 {
@@ -19,6 +19,7 @@ namespace Microservices.LabService
             builder.Services.AddHttpContextAccessor();
             var authOptions = builder.Configuration.GetSection("Auth").Get<AuthOptions>();
 
+            builder.Services.AddHostedService<ConsumerService>();
             builder.Services.AddAuthentication(opt =>
             {
                 opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -36,7 +37,7 @@ namespace Microservices.LabService
 
                     ValidateLifetime = true,
 
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(authOptions.Secret)),
+                    IssuerSigningKey = authOptions.GetSymmetricSecurityKey(),
                     ValidateIssuerSigningKey = true
                 };
             });

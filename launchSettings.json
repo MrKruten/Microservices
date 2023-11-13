@@ -5,7 +5,8 @@
       "commandVersion": "1.0",
       "serviceActions": {
         "microservices.usersservice": "StartDebugging",
-        "microservices.labservice": "StartDebugging"
+        "microservices.labservice": "StartDebugging",
+        "microservices.queue": "StartDebugging"
       }
     }
   }

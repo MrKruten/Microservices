@@ -1,6 +1,8 @@
 using Microservices.Core;
 using Microservices.UsersService.Context;
+using Microservices.UsersService.Services.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Microservices.UsersService
 {
@@ -17,15 +19,18 @@ namespace Microservices.UsersService
 
             // Add services to the container.
 
-            var connection = builder.Configuration.GetConnectionString("DefaultConnection");
+            var connectionDB = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<LabContext>(options =>
             {
-                options.UseNpgsql(connection);
+                options.UseNpgsql(connectionDB);
             });
 
             builder.Services.AddControllers();
+
             var authOptions = builder.Configuration.GetSection("Auth");
             builder.Services.Configure<AuthOptions>(authOptions);
+
+            builder.Services.AddScoped<IRabbitMqService, RabbitMqService>();
 
             builder.Services.AddCors(options => options.AddDefaultPolicy(b =>
             {
