@@ -6,7 +6,8 @@
       "serviceActions": {
         "microservices.usersservice": "StartDebugging",
         "microservices.labservice": "StartDebugging",
-        "microservices.queue": "StartDebugging"
+        "microservices.queue": "StartDebugging",
+        "microservices.consumer": "StartDebugging"
       }
     }
   }

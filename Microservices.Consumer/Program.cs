@@ -1,23 +1,22 @@
-﻿using System.Text;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Text;
 
-namespace Microservices.LabService.Services
+namespace Microservices.Consumer
 {
-    public class ConsumerService : BackgroundService
+    internal class Program
     {
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        static void Main(string[] args)
         {
             var factory = new ConnectionFactory
             {
                 Uri = new Uri("amqp://admin:admin@messageBroker:5672"),
             };
-            await Task.Delay(5000);
-            await TryConnectToRabbitMq(factory);
-            await Task.CompletedTask;
+            Thread.Sleep(5000);
+            TryConnectToRabbitMq(factory);
         }
 
-        private async Task TryConnectToRabbitMq(ConnectionFactory factory)
+        static private void TryConnectToRabbitMq(ConnectionFactory factory)
         {
             try
             {
@@ -26,12 +25,12 @@ namespace Microservices.LabService.Services
             catch
             {
                 Console.WriteLine("rabbitmq: error connect");
-                await Task.Delay(5000);
-                await TryConnectToRabbitMq(factory);
+                Thread.Sleep(5000);
+                TryConnectToRabbitMq(factory);
             }
         }
 
-        private void ConnectToRabbitMq(ConnectionFactory factory)
+        static private void ConnectToRabbitMq(ConnectionFactory factory)
         {
             Console.WriteLine("rabbitmq: try connect");
             using (var connection = factory.CreateConnection())
@@ -57,7 +56,10 @@ namespace Microservices.LabService.Services
                         autoAck: true,
                         consumer: consumer);
 
-                    while (true){}
+                    Console.WriteLine("Type 'exit' to exit.");
+                    while (Console.ReadLine() != "exit")
+                    {
+                    }
                 }
             }
         }
