@@ -6,18 +6,18 @@ namespace Microservices.LabService.Services
 {
     public class ConsumerService : BackgroundService
     {
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var factory = new ConnectionFactory
             {
                 Uri = new Uri("amqp://admin:admin@messageBroker:5672"),
             };
-            Thread.Sleep(1000);
-            TryConnectToRabbitMq(factory);
-            return Task.CompletedTask;
+            await Task.Delay(5000);
+            await TryConnectToRabbitMq(factory);
+            await Task.CompletedTask;
         }
 
-        private void TryConnectToRabbitMq(ConnectionFactory factory)
+        private async Task TryConnectToRabbitMq(ConnectionFactory factory)
         {
             try
             {
@@ -26,8 +26,8 @@ namespace Microservices.LabService.Services
             catch
             {
                 Console.WriteLine("rabbitmq: error connect");
-                Thread.Sleep(5000);
-                TryConnectToRabbitMq(factory);
+                await Task.Delay(5000);
+                await TryConnectToRabbitMq(factory);
             }
         }
 
@@ -57,11 +57,7 @@ namespace Microservices.LabService.Services
                         autoAck: true,
                         consumer: consumer);
 
-                    Console.WriteLine("Type 'exit' to exit.");
-                    while (Console.ReadLine() != "exit")
-                    {
-
-                    }
+                    while (true){}
                 }
             }
         }

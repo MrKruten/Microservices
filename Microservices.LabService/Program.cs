@@ -53,8 +53,8 @@ namespace Microservices.LabService
                 options.SwaggerDoc("V1", new OpenApiInfo
                 {
                     Version = "V1",
-                    Title = "WebAPI",
-                    Description = "Office3D WebAPI"
+                    Title = "LabServiceAPI",
+                    Description = "LabService"
                 });
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
@@ -88,7 +88,7 @@ namespace Microservices.LabService
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(options => {
-                    options.SwaggerEndpoint("/swagger/V1/swagger.json", "Office3D WebAPI");
+                    options.SwaggerEndpoint("/swagger/V1/swagger.json", "LabService WebAPI");
                 });
             }
             app.UseCors();
