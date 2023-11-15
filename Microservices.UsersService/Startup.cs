@@ -8,18 +8,18 @@ namespace Microservices.UsersService
     public class Startup
     {
         private IWebHostEnvironment _env;
-        private IConfiguration _configuration;
+        public IConfiguration Configuration;
 
         public Startup(IWebHostEnvironment env, IConfiguration configuration)
         {
             _env = env;
-            _configuration = configuration;
+            Configuration = configuration;
         }
 
         public void ConfigureServices(IServiceCollection services)
         {
 
-            var connectionDB = _configuration.GetConnectionString("DefaultConnection");
+            var connectionDB = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<LabContext>(options =>
             {
                 options.UseNpgsql(connectionDB);
@@ -27,7 +27,7 @@ namespace Microservices.UsersService
 
             services.AddControllers();
 
-            var authOptions = _configuration.GetSection("Auth");
+            var authOptions = Configuration.GetSection("Auth");
             services.Configure<AuthOptions>(authOptions);
 
             services.AddScoped<IRabbitMqService, RabbitMqService>();
@@ -56,7 +56,6 @@ namespace Microservices.UsersService
 
             app.UseRouting();
             app.UseCors();
-            app.UseAuthorization();
 
             app.UseEndpoints(e => e.MapControllers());
         }

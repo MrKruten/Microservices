@@ -1,52 +1,52 @@
 ﻿using Microservices.Core;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;
 
 namespace Microservices.LabService
 {
     public class Startup
     {
-        private IWebHostEnvironment _env;
-        private IConfiguration _configuration;
+        public IWebHostEnvironment _env;
+        private IConfiguration Configuration;
 
         public Startup(IWebHostEnvironment env, IConfiguration configuration)
         {
             _env = env;
-            _configuration = configuration;
+            Configuration = configuration;
         }
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
-            services.AddHttpContextAccessor();
-
-            var authOptions = _configuration.GetSection("Auth");
-            services.Configure<AuthOptions>(authOptions);
-
-            services.AddAuthentication(opt =>
+            services.AddControllers().AddJsonOptions(options =>
             {
-                opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
+                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                options.JsonSerializerOptions.WriteIndented = true;
+            }); ;
+
+            var authOptions = Configuration.GetSection("Auth").Get<AuthOptions>();
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
-                var auth = authOptions.Get<AuthOptions>();
-                //options.RequireHttpsMetadata = false;
+                options.RequireHttpsMetadata = false;
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = auth.Issuer,
+                    ValidIssuer = authOptions.Issuer,
 
                     ValidateAudience = true,
-                    ValidAudience = auth.Audience,
+                    ValidAudience = authOptions.Audience,
 
                     ValidateLifetime = true,
 
-                    IssuerSigningKey = auth.GetSymmetricSecurityKey(),
+
+                    IssuerSigningKey = authOptions.GetSymmetricSecurityKey(),
                     ValidateIssuerSigningKey = true
                 };
             });
+            //services.AddAuthorization();
 
             services.AddCors(options => options.AddDefaultPolicy(b =>
             {
@@ -100,14 +100,13 @@ namespace Microservices.LabService
                 });
             }
 
+            app.UseRouting();
             app.UseCors();
 
             app.UseAuthentication();
-            app.UseRouting();
-            app.UseMiddleware<AuthorizationMiddleware>();
             app.UseAuthorization();
 
-            app.UseEndpoints(e => e.MapControllers());
+            app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }
 }
