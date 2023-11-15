@@ -11,7 +11,7 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microservices.Core", "Microservices.Core\Microservices.Core.csproj", "{7C3E14C3-2E25-40BA-8BCC-B1AA4D038C9C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microservices.Consumer", "Microservices.Consumer\Microservices.Consumer.csproj", "{9985A055-21CB-4984-95D6-921044031FF1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microservices.Consumer", "Microservices.Consumer\Microservices.Consumer.csproj", "{9985A055-21CB-4984-95D6-921044031FF1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -19,7 +19,6 @@ namespace Microservices.UsersService.Controllers
         private readonly IOptions<AuthOptions> _authOptions;
         private readonly IRabbitMqService _rabbitMqService;
         private readonly LabContext _db;
-
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(IOptions<AuthOptions> authOptions, ILogger<AuthController> logger, LabContext db, IRabbitMqService rabbitMqService)
@@ -34,6 +33,7 @@ namespace Microservices.UsersService.Controllers
         [HttpGet, ActionName("GetUsers")]
         public async Task<IActionResult> Get()
         {
+            _logger.LogInformation($"AuthController - get users {DateTime.Now}");
             var users = await _db.Users.ToListAsync();
             return Ok(users);
         }
@@ -47,10 +47,12 @@ namespace Microservices.UsersService.Controllers
             if (user != null)
             {
                 var token = GenerateJWT(user);
+                _logger.LogInformation($"AuthController - success login {request.Email} {DateTime.Now}");
                 _rabbitMqService.SendMessage($"user {user.Email} login");
                 return Ok(new { access_token = token });
             }
 
+            _logger.LogInformation($"AuthController - unauthorized login {request.Email} {DateTime.Now}");
             return Unauthorized();
         }
 
@@ -62,6 +64,7 @@ namespace Microservices.UsersService.Controllers
 
             if (user != null)
             {
+                _logger.LogInformation($"AuthController - bad request register {request.Email} {DateTime.Now}");
                 return BadRequest("A user with such an email already exists");
             }
 
@@ -71,7 +74,7 @@ namespace Microservices.UsersService.Controllers
                 Password = request.Password,
             };
             newUser = await AddUser(newUser);
-
+            _logger.LogInformation($"AuthController - success register {request.Email} {DateTime.Now}");
             return Ok(newUser);
         }
 

@@ -1,9 +1,7 @@
-using Microservices.Core;
-using Microservices.LabService.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Serilog;
+using Serilog.Exceptions;
+using Serilog.Sinks.Elasticsearch;
+using System.Reflection;
 
 namespace Microservices.LabService
 {
@@ -11,96 +9,162 @@ namespace Microservices.LabService
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            ConfigureLogging();
 
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            builder.Services.AddHttpContextAccessor();
-            var authOptions = builder.Configuration.GetSection("Auth").Get<AuthOptions>();
-
-            builder.Services.AddHostedService<ConsumerService>();
-            builder.Services.AddAuthentication(opt =>
-            {
-                opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
-            {
-                //options.RequireHttpsMetadata = false;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidIssuer = authOptions.Issuer,
-
-                    ValidateAudience = true,
-                    ValidAudience = authOptions.Audience,
-
-                    ValidateLifetime = true,
-
-                    IssuerSigningKey = authOptions.GetSymmetricSecurityKey(),
-                    ValidateIssuerSigningKey = true
-                };
-            });
-
-            builder.Services.AddCors(options => options.AddDefaultPolicy(b =>
-            {
-                b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-            }));
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(options =>
-            {
-                options.SwaggerDoc("V1", new OpenApiInfo
-                {
-                    Version = "V1",
-                    Title = "LabServiceAPI",
-                    Description = "LabService"
-                });
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Name = "Authorization",
-                    Description = "Bearer Authentication with JWT Token",
-                    Type = SecuritySchemeType.Http
-                });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Id = "Bearer",
-                                Type = ReferenceType.SecurityScheme
-                            }
-                        },
-                        new List<string>()
-                    }
-                });
-            });
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI(options => {
-                    options.SwaggerEndpoint("/swagger/V1/swagger.json", "LabService WebAPI");
-                });
-            }
-            app.UseCors();
-            
-            app.UseAuthentication();
-            //app.UseRouting();
-            app.UseMiddleware<AuthorizationMiddleware>();
-            app.UseAuthorization();
-
-            app.MapControllers();
-
-            app.Run();
+            CreateHost(args);
         }
+
+        private static void CreateHost(string[] args)
+        {
+            try
+            {
+                var app = CreateHostBuilder(args).Build();
+                app.Run();
+            }
+            catch (System.Exception ex)
+            {
+                Log.Fatal($"Failed to start {Assembly.GetExecutingAssembly().GetName().Name}", ex);
+                throw;
+            }
+        }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                })
+                .ConfigureAppConfiguration(configuration =>
+                {
+                    configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    configuration.AddJsonFile(
+                        $"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json",
+                        optional: true);
+                })
+                .UseSerilog();
+
+        private static void ConfigureLogging()
+        {
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{environment}.json", optional: true)
+                .Build();
+
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .Enrich.WithExceptionDetails()
+                .WriteTo.Debug()
+                .WriteTo.Console()
+                .WriteTo.Elasticsearch(ConfigureElasticSink(configuration, environment!))
+                .Enrich.WithProperty("Environment", environment!)
+                .ReadFrom.Configuration(configuration)
+                .CreateLogger();
+        }
+
+        private static ElasticsearchSinkOptions ConfigureElasticSink(IConfigurationRoot configuration, string environment)
+        {
+            return new ElasticsearchSinkOptions(new Uri(configuration["ElasticConfiguration:Uri"]))
+            {
+                AutoRegisterTemplate = true,
+                IndexFormat = $"{Assembly.GetExecutingAssembly().GetName().Name?.ToLower().Replace(".", "-")}-{environment?.ToLower().Replace(".", "-")}-{DateTime.UtcNow:yyyy-MM}",
+                NumberOfReplicas = 1,
+                NumberOfShards = 2
+                // ModifyConnectionSettings = connectionConfiguration => connectionConfiguration.BasicAuthentication("elastic", "wp_WOdUePUeF7*L+EQxD")
+            };
+        }
+
+        //    public static void Main(string[] args)
+        //{
+        //    var builder = WebApplication.CreateBuilder(args);
+
+        //    // Add services to the container.
+
+        //    builder.Services.AddControllers();
+        //    builder.Services.AddHttpContextAccessor();
+        //    var authOptions = builder.Configuration.GetSection("Auth").Get<AuthOptions>();
+
+        //    builder.Services.AddAuthentication(opt =>
+        //    {
+        //        opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        //        opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        //    }).AddJwtBearer(options =>
+        //    {
+        //        //options.RequireHttpsMetadata = false;
+        //        options.TokenValidationParameters = new TokenValidationParameters
+        //        {
+        //            ValidateIssuer = true,
+        //            ValidIssuer = authOptions.Issuer,
+
+        //            ValidateAudience = true,
+        //            ValidAudience = authOptions.Audience,
+
+        //            ValidateLifetime = true,
+
+        //            IssuerSigningKey = authOptions.GetSymmetricSecurityKey(),
+        //            ValidateIssuerSigningKey = true
+        //        };
+        //    });
+
+        //    builder.Services.AddCors(options => options.AddDefaultPolicy(b =>
+        //    {
+        //        b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        //    }));
+        //    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        //    builder.Services.AddEndpointsApiExplorer();
+        //    builder.Services.AddSwaggerGen(options =>
+        //    {
+        //        options.SwaggerDoc("V1", new OpenApiInfo
+        //        {
+        //            Version = "V1",
+        //            Title = "LabServiceAPI",
+        //            Description = "LabService"
+        //        });
+        //        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        //        {
+        //            Scheme = "Bearer",
+        //            BearerFormat = "JWT",
+        //            In = ParameterLocation.Header,
+        //            Name = "Authorization",
+        //            Description = "Bearer Authentication with JWT Token",
+        //            Type = SecuritySchemeType.Http
+        //        });
+        //        options.AddSecurityRequirement(new OpenApiSecurityRequirement
+        //        {
+        //            {
+        //                new OpenApiSecurityScheme
+        //                {
+        //                    Reference = new OpenApiReference
+        //                    {
+        //                        Id = "Bearer",
+        //                        Type = ReferenceType.SecurityScheme
+        //                    }
+        //                },
+        //                new List<string>()
+        //            }
+        //        });
+        //    });
+
+        //    var app = builder.Build();
+
+        //    // Configure the HTTP request pipeline.
+        //    if (app.Environment.IsDevelopment())
+        //    {
+        //        app.UseSwagger();
+        //        app.UseSwaggerUI(options => {
+        //            options.SwaggerEndpoint("/swagger/V1/swagger.json", "LabService WebAPI");
+        //        });
+        //    }
+        //    app.UseCors();
+
+        //    app.UseAuthentication();
+        //    //app.UseRouting();
+        //    app.UseMiddleware<AuthorizationMiddleware>();
+        //    app.UseAuthorization();
+
+        //    app.MapControllers();
+
+        //    app.Run();
+        //}
     }
 }

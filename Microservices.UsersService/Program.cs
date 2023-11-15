@@ -1,8 +1,9 @@
-using Microservices.Core;
 using Microservices.UsersService.Context;
-using Microservices.UsersService.Services.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Serilog.Exceptions;
+using Serilog.Sinks.Elasticsearch;
+using System.Reflection;
 
 namespace Microservices.UsersService
 {
@@ -15,61 +16,79 @@ namespace Microservices.UsersService
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            ConfigureLogging();
 
-            // Add services to the container.
+            CreateHost(args);
+        }
 
-            var connectionDB = builder.Configuration.GetConnectionString("DefaultConnection");
-            builder.Services.AddDbContext<LabContext>(options =>
+        private static void CreateHost(string[] args)
+        {
+            try
             {
-                options.UseNpgsql(connectionDB);
-            });
+                var app = CreateHostBuilder(args).Build();
 
-            builder.Services.AddControllers();
-
-            var authOptions = builder.Configuration.GetSection("Auth");
-            builder.Services.Configure<AuthOptions>(authOptions);
-
-            builder.Services.AddScoped<IRabbitMqService, RabbitMqService>();
-
-            builder.Services.AddCors(options => options.AddDefaultPolicy(b =>
-            {
-                b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-            }));
-
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            var app = builder.Build();
-
-            using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
-            {
-                using (var context = serviceScope.ServiceProvider.GetService<LabContext>())
+                using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
                 {
-                    context?.Database.SetCommandTimeout(60);
-                    context?.Database.Migrate();
+                    using (var context = serviceScope.ServiceProvider.GetService<LabContext>())
+                    {
+                        context?.Database.SetCommandTimeout(60);
+                        context?.Database.Migrate();
+                    }
                 }
+
+                app.Run();
             }
-
-            app.UseDefaultFiles();
-            app.UseStaticFiles();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            catch (System.Exception ex)
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                Log.Fatal($"Failed to start {Assembly.GetExecutingAssembly().GetName().Name}", ex);
+                throw;
             }
+        }
 
-            app.UseRouting();
-            app.UseCors();
-            app.UseAuthorization();
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                })
+                .ConfigureAppConfiguration(configuration =>
+                {
+                    configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    configuration.AddJsonFile(
+                        $"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json",
+                        optional: true);
+                })
+                .UseSerilog();
+
+        private static void ConfigureLogging()
+        {
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{environment}.json", optional: true)
+                .Build();
             
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .Enrich.WithExceptionDetails()
+                .WriteTo.Debug()
+                .WriteTo.Console()
+                .WriteTo.Elasticsearch(ConfigureElasticSink(configuration, environment!))
+                .Enrich.WithProperty("Environment", environment!)
+                .ReadFrom.Configuration(configuration)
+                .CreateLogger();
+        }
 
-            app.MapControllers();
-
-            app.Run();
+        private static ElasticsearchSinkOptions ConfigureElasticSink(IConfigurationRoot configuration, string environment)
+        {
+            return new ElasticsearchSinkOptions(new Uri(configuration["ElasticConfiguration:Uri"]))
+            {
+                AutoRegisterTemplate = true,
+                IndexFormat = $"{Assembly.GetExecutingAssembly().GetName().Name?.ToLower().Replace(".", "-")}-{environment?.ToLower().Replace(".", "-")}-{DateTime.UtcNow:yyyy-MM}",
+                NumberOfReplicas = 1,
+                NumberOfShards = 2 
+                // ModifyConnectionSettings = connectionConfiguration => connectionConfiguration.BasicAuthentication("elastic", "wp_WOdUePUeF7*L+EQxD")
+            };
         }
     }
 }

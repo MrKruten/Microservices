@@ -27,7 +27,7 @@ services:
     container_name: lab_service
     image: ${DOCKER_REGISTRY-}microserviceslabservice
     depends_on:
-     - rabbit
+      - rabbit
     networks:
       - labs
     build:
@@ -78,33 +78,6 @@ services:
       - "80:80"
     restart: always
 
-  elasticsearch:
-    container_name: elasticsearch
-    image: elasticsearch:7.9.2
-    ports:
-      - 9200:9200
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
-    environment:
-      - xpack.monitoring.enabled=true
-      - xpack.watcher.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - discovery.type=single-node
-    networks:
-      - labs
-
-  kibana:
-    container_name: kibana
-    image: kibana:7.9.2
-    ports:
-      - 5601:5601
-    depends_on:
-      - elasticsearch
-    environment:
-      - ELASTICSEARCH_URL=http://localhost:9200
-    networks:
-      - labs
-
   consumer:
     container_name: consumer
     image: ${DOCKER_REGISTRY-}microservicesconsumer
@@ -116,4 +89,33 @@ services:
     build:
       context: .
       dockerfile: Microservices.Consumer/Dockerfile
+  
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:7.2.0
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.monitoring.enabled=true
+      - xpack.watcher.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    networks:
+      - labs
+
+  kibana:
+    container_name: kibana
+    image: kibana:7.2.0
+    ports:
+      - "5601:5601"
+    depends_on:
+     - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS="http://elasticsearch:9200"
+      - XPACK_MONITORING_ENABLED=true
+    networks:
+      - labs
 
