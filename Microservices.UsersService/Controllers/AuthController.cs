@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using Microservices.Core;
 using Microservices.UsersService.Context;
 using Microservices.UsersService.Models;
@@ -8,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
 
 namespace Microservices.UsersService.Controllers
 {
@@ -101,7 +101,7 @@ namespace Microservices.UsersService.Controllers
         {
             var authParams = _authOptions.Value;
 
-            var securityKey = authParams.GetSymmetricSecurityKey();
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authParams.Secret));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>

@@ -1,8 +1,8 @@
 ﻿using Microservices.Core;
+using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using System.Text.Json.Serialization;
+using System.Text;
 
 namespace Microservices.LabService
 {
@@ -19,18 +19,12 @@ namespace Microservices.LabService
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers().AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-                options.JsonSerializerOptions.WriteIndented = true;
-            }); ;
+            services.AddControllers();
 
             var authOptions = Configuration.GetSection("Auth").Get<AuthOptions>();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false;
-
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -42,7 +36,7 @@ namespace Microservices.LabService
                     ValidateLifetime = true,
 
 
-                    IssuerSigningKey = authOptions.GetSymmetricSecurityKey(),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authOptions.Secret)),
                     ValidateIssuerSigningKey = true
                 };
             });
