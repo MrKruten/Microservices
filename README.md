@@ -1,10 +1,10 @@
-# Лабораторные работы по дисциплине "МИКРОСЕРВИСНАЯ АРХИТЕКТУРА"
+# Р›Р°Р±РѕСЂР°С‚РѕСЂРЅС‹Рµ СЂР°Р±РѕС‚С‹ РїРѕ РґРёСЃС†РёРїР»РёРЅРµ "РњРРљР РћРЎР•Р Р’РРЎРќРђРЇ РђР РҐРРўР•РљРўРЈР Рђ"
 
-UserService предназначен для работы с пользователями и созданию jwt токена.
+UserService РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРјРё Рё СЃРѕР·РґР°РЅРёСЋ jwt С‚РѕРєРµРЅР°.
 
-LabService предназначен для демонстрации работы двух микросервисов и авторизации через jwt token (Bearer).
+LabService РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†РёРё СЂР°Р±РѕС‚С‹ РґРІСѓС… РјРёРєСЂРѕСЃРµСЂРІРёСЃРѕРІ Рё Р°РІС‚РѕСЂРёР·Р°С†РёРё С‡РµСЂРµР· jwt token (Bearer).
 
-## Стек:
+## РЎС‚РµРє:
 - .Net 7.0
 - Postgres
 - Rabbitmq
@@ -14,7 +14,7 @@ LabService предназначен для демонстрации работы двух микросервисов и авторизации
 - Kibana
 - Serilog
 
-## Лабораторная с базой данных:
+## Р›Р°Р±РѕСЂР°С‚РѕСЂРЅР°СЏ СЃ Р±Р°Р·РѕР№ РґР°РЅРЅС‹С…:
 ` docker exec -t db pg_dumpall -c -U admin > dump.sql `
 
 ` docker exec db psql -h localhost -d laba -U admin -W admin -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND datname = 'laba'" `
@@ -25,10 +25,10 @@ LabService предназначен для демонстрации работы двух микросервисов и авторизации
 
 ` cat dump.sql | docker exec -i db psql -h localhost -U admin -d laba `
 
-## Лабораторная с docker swarm:
+## Р›Р°Р±РѕСЂР°С‚РѕСЂРЅР°СЏ СЃ docker swarm:
 Manager: docker swarm init
 
-Manager: передать токен
+Manager: РїРµСЂРµРґР°С‚СЊ С‚РѕРєРµРЅ
 
 Worker: docker swarm join --token ...
 
