@@ -2,7 +2,7 @@
 using System.Text.Json;
 using RabbitMQ.Client;
 
-namespace Microservices.UsersService.Services.RabbitMQ
+namespace Microservices.UsersService.Services
 {
     public class RabbitMqService : IRabbitMqService
     {

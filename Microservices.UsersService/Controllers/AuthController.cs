@@ -2,11 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microservices.Core;
-using Microservices.UsersService.Context;
 using Microservices.UsersService.Models;
-using Microservices.UsersService.Services.RabbitMQ;
+using Microservices.UsersService.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -18,15 +16,15 @@ namespace Microservices.UsersService.Controllers
     {
         private readonly IOptions<AuthOptions> _authOptions;
         private readonly IRabbitMqService _rabbitMqService;
-        private readonly LabContext _db;
+        private readonly IUsersService _usersService;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IOptions<AuthOptions> authOptions, ILogger<AuthController> logger, LabContext db, IRabbitMqService rabbitMqService)
+        public AuthController(IOptions<AuthOptions> authOptions, ILogger<AuthController> logger, IUsersService usersService, IRabbitMqService rabbitMqService)
         {
             _authOptions = authOptions;
             _logger = logger;
-            _db = db;
             _rabbitMqService = rabbitMqService;
+            _usersService = usersService;
         }
 
         [Route("")]
@@ -34,7 +32,7 @@ namespace Microservices.UsersService.Controllers
         public async Task<IActionResult> Get()
         {
             _logger.LogInformation($"AuthController - get users {DateTime.Now}");
-            var users = await _db.Users.ToListAsync();
+            var users = await _usersService.GetAllUsers();
             return Ok(users);
         }
 
@@ -42,7 +40,7 @@ namespace Microservices.UsersService.Controllers
         [HttpPost, ActionName("Login")]
         public async Task<IActionResult> Login([FromBody] Login request)
         {
-            var user = await GetUser(request.Email, request.Password);
+            var user = await _usersService.GetUser(request.Email, request.Password);
 
             if (user != null)
             {
@@ -60,7 +58,7 @@ namespace Microservices.UsersService.Controllers
         [HttpPost, ActionName("Register")]
         public async Task<IActionResult> Register([FromBody] Login request)
         {
-            var user = await GetUserByEmail(request.Email);
+            var user = await _usersService.GetUserByEmail(request.Email);
 
             if (user != null)
             {
@@ -73,28 +71,9 @@ namespace Microservices.UsersService.Controllers
                 Email = request.Email,
                 Password = request.Password,
             };
-            newUser = await AddUser(newUser);
+            newUser = await _usersService.AddUser(newUser);
             _logger.LogInformation($"AuthController - success register {request.Email} {DateTime.Now}");
             return Ok(newUser);
-        }
-
-        private async Task<User> AddUser(User user)
-        {
-            var result = await _db.Users.AddAsync(user);
-            await _db.SaveChangesAsync();
-            return result.Entity;
-        }
-
-        private async Task<User?> GetUser(string email, string password)
-        {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email && u.Password == password);
-            return user;
-        }
-
-        private async Task<User?> GetUserByEmail(string email)
-        {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
-            return user;
         }
 
         private string GenerateJWT(User user)

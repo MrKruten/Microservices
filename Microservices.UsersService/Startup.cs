@@ -1,6 +1,7 @@
 ﻿using Microservices.Core;
 using Microservices.UsersService.Context;
-using Microservices.UsersService.Services.RabbitMQ;
+using Microservices.UsersService.Repositories;
+using Microservices.UsersService.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Microservices.UsersService
@@ -31,6 +32,9 @@ namespace Microservices.UsersService
             services.Configure<AuthOptions>(authOptions);
 
             services.AddScoped<IRabbitMqService, RabbitMqService>();
+            services.AddScoped<IUsersRepository, UsersRepository>();
+            services.AddScoped<IUsersService, UserService>();
+
 
             services.AddCors(options => options.AddDefaultPolicy(b =>
             {

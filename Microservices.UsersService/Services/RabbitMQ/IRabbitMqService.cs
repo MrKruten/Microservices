@@ -1,4 +1,4 @@
-﻿namespace Microservices.UsersService.Services.RabbitMQ
+﻿namespace Microservices.UsersService.Services
 {
     public interface IRabbitMqService
     {
