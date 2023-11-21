@@ -26,17 +26,20 @@ LabService предназначен для демонстрации работы
 ` cat dump.sql | docker exec -i db psql -h localhost -U admin -d laba `
 
 ## Лабораторная с docker swarm:
-Manager: docker swarm init
+
+
+### Полезные ссылки:
+- https://www.c-sharpcorner.com/blogs/communicate-multiple-vm-os-ubuntu-on-windows10-using-docker-swarm2
+- https://habr.com/ru/articles/659813/
+
+Manager: docker swarm init --advertise-addr [manager IP]
 
 Manager: передать токен
 
-Worker: docker swarm join --token ...
-
-Worker (windows): docker load -i ...tar
-Worker (linux): docker load < ...tar
+Worker: docker swarm join --token
 
 Manager: docker node ls
 
-Manager: docker stack deploy --compose-file=docker-compose.stage.yml stage
+Manager: docker stack deploy --with-registry-auth -c docker-compose.stage.yml stage
 
 Manager: docker service ls
