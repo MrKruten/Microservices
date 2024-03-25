@@ -1,0 +1,21 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build docker-compose') {
+            steps {
+                script {
+                    bat 'docker-compose build'
+                }
+            }
+        }
+
+        stage('Up docker-compose') {
+            steps {
+                script {
+                    bat 'docker-compose up -d'
+                }
+            }
+        }
+    }
+}
