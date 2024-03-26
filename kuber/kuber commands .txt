@@ -1,0 +1,13 @@
+kubectl apply -f persistentVolume.yaml
+kubectl apply -f persistentVolumeClaim.yaml
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+kubectl apply -f configMap.yaml
+
+kubectl get services
+minikube service labservice
+
+kubectl delete pv pgdata-pv
+kubectl delete pv elasticsearch-pv
+kubectl delete pvc pgdata-pvc
+kubectl delete pvc elasticsearch-pvc

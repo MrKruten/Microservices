@@ -19,6 +19,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "kuber", "kuber", "{A79601BD-1222-44DD-B4E0-119E74721ED0}"
+	ProjectSection(SolutionItems) = preProject
+		persistentVolume.yaml = persistentVolume.yaml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,6 +53,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A79601BD-1222-44DD-B4E0-119E74721ED0} = {6D34C2D6-51E8-40E4-B869-BDC53E2352E1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {ABB1139E-ADA7-4778-9372-32AD94F32543}

@@ -1,0 +1,208 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: usersservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: usersservice
+  template:
+    metadata:
+      labels:
+        app: usersservice
+    spec:
+      containers:
+        - name: usersservice
+          image: d1zov/microservicesusersservice:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: labservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: labservice
+  template:
+    metadata:
+      labels:
+        app: labservice
+    spec:
+      containers:
+        - name: labservice
+          image: d1zov/microserviceslabservice:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      containers:
+        - name: consumer
+          image: d1zov/microservicesconsumer:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: postgres:14.1-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: admin
+            - name: POSTGRES_USER
+              value: admin
+            - name: POSTGRES_DB
+              value: laba
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: pgdata-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbit
+  template:
+    metadata:
+      labels:
+        app: rabbit
+    spec:
+      containers:
+        - name: rabbit
+          image: rabbitmq:management
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: "admin"
+            - name: RABBITMQ_DEFAULT_PASS
+              value: "admin"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proxy
+  template:
+    metadata:
+      labels:
+        app: proxy
+    spec:
+      containers:
+        - name: proxy
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+        - name: elasticsearch
+          image: elasticsearch:7.2.0
+          ports:
+            - containerPort: 9200
+          volumeMounts:
+            - name: elasticsearch-data
+              mountPath: /usr/share/elasticsearch/data
+      volumes:
+        - name: elasticsearch-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: kibana:7.2.0
+          ports:
+            - containerPort: 5601
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://elasticsearch:9200"
+            - name: XPACK_MONITORING_ENABLED
+              value: "true"

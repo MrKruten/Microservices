@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pgdata-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: C:\projects\Microservices\kuber\pgdata
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: elasticsearch-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path:  C:\projects\Microservices\kuber\elasticsearch-data
