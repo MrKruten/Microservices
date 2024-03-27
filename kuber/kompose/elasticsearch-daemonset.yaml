@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.32.0 (765fde254)
+  labels:
+    io.kompose.service: elasticsearch
+  name: elasticsearch
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: elasticsearch
+  template:
+    metadata:
+      labels:
+        io.kompose.network/kompose-default: "true"
+        io.kompose.service: elasticsearch
+    spec:
+      containers:
+        - env:
+            - name: ES_JAVA_OPTS
+              value: -Xms512m -Xmx512m
+            - name: discovery.type
+              value: single-node
+            - name: xpack.monitoring.enabled
+              value: "true"
+            - name: xpack.security.enabled
+              value: "false"
+            - name: xpack.watcher.enabled
+              value: "false"
+          image: elasticsearch:7.2.0
+          name: elasticsearch
+          ports:
+            - containerPort: 9200
+              hostPort: 9200
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: elasticsearch-data
+      restartPolicy: Always
+      volumes:
+        - name: elasticsearch-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-data

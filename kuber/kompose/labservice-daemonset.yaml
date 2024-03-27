@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.32.0 (765fde254)
+  labels:
+    io.kompose.service: labservice
+  name: labservice
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: labservice
+  template:
+    metadata:
+      labels:
+        io.kompose.network/kompose-default: "true"
+        io.kompose.service: labservice
+    spec:
+      containers:
+        - env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+          image: d1zov/microserviceslabservice:latest
+          name: lab-service
+          ports:
+            - containerPort: 80
+              hostPort: 57870
+              protocol: TCP
+      restartPolicy: Always

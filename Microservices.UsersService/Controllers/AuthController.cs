@@ -46,7 +46,14 @@ namespace Microservices.UsersService.Controllers
             {
                 var token = GenerateJWT(user);
                 _logger.LogInformation($"AuthController - success login {request.Email} {DateTime.Now}");
-                _rabbitMqService.SendMessage($"user {user.Email} login");
+                try
+                {
+                    _rabbitMqService.SendMessage($"user {user.Email} login");
+                }
+                catch (Exception e)
+                {
+                    // ignore
+                }
                 return Ok(new { access_token = token });
             }
 

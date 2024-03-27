@@ -1,8 +1,4 @@
-kubectl apply -f persistentVolume.yaml
-kubectl apply -f persistentVolumeClaim.yaml
-kubectl apply -f deployment.yaml
-kubectl apply -f service.yaml
-kubectl apply -f configMap.yaml
+kubectl apply -f persistentVolume.yaml,persistentVolumeClaim.yaml,deployment.yaml,service.yaml,configMap.yaml
 
 kubectl get services
 minikube service labservice

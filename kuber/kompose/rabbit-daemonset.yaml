@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.32.0 (765fde254)
+  labels:
+    io.kompose.service: rabbit
+  name: rabbit
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: rabbit
+  template:
+    metadata:
+      labels:
+        io.kompose.network/kompose-default: "true"
+        io.kompose.service: rabbit
+    spec:
+      containers:
+        - env:
+            - name: RABBITMQ_DEFAULT_PASS
+              value: admin
+            - name: RABBITMQ_DEFAULT_USER
+              value: admin
+          image: rabbitmq:management
+          name: rabbit
+          ports:
+            - containerPort: 5672
+              hostPort: 5672
+              protocol: TCP
+            - containerPort: 15672
+              hostPort: 15672
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/lib/rabbitmq
+              name: rabbit-claim0
+            - mountPath: /var/log/rabbitmq
+              name: rabbit-claim1
+      restartPolicy: Always
+      volumes:
+        - name: rabbit-claim0
+          persistentVolumeClaim:
+            claimName: rabbit-claim0
+        - name: rabbit-claim1
+          persistentVolumeClaim:
+            claimName: rabbit-claim1
